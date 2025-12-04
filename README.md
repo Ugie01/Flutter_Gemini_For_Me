@@ -32,7 +32,6 @@ Google's **Gemini 2.5 Flash** 모델을 활용한 Flutter 기반의 AI 채팅 �
 |:----------------------------------------:|:----------------------------------------------:|:----------------------------------------------------:|
 | <img src="assets/main.png" width="250"/> | <img src="assets/basic_mode.png" width="250"/> | <img src="assets/eng_teacher_mode.png" width="250"/> |
 
-> *여기에 실제 앱 실행 스크린샷을 추가하면 더 좋습니다.*
 
 ## 🚀 설치 및 실행 방법 (Getting Started)
 
