@@ -4,15 +4,17 @@ import 'package:provider/provider.dart';
 import 'controllers/chat_controller.dart';
 import 'views/home_screen.dart';
 
+// 앱의 진입점 및 환경 설정 초기화 기능
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env"); // 환경변수 로드
+  await dotenv.load(fileName: ".env");
   runApp(const MyGeminiApp());
 }
 
 class MyGeminiApp extends StatelessWidget {
   const MyGeminiApp({super.key});
 
+  // 앱의 루트 위젯 구성 및 Provider 설정 기능
   @override
   Widget build(BuildContext context) {
     return MultiProvider(

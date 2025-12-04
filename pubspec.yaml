@@ -54,6 +54,7 @@ dependencies:
   # 6. 유틸리티 (날짜 포맷, 고유 ID)
   intl: ^0.20.0
   uuid: ^4.5.2
+  flutter_markdown: ^0.7.6
 
   # API 키 관리 (새로 추가됨)
   flutter_dotenv: ^6.0.0

@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/chat_controller.dart';
 import '../../models/chat_message.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
   const MessageBubble({super.key, required this.message});
 
+  // 개별 메시지 말풍선 UI를 구성하는 기능
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
-
-    // 실시간 아이콘 변경을 위해 watch 사용
     final controller = context.watch<ChatController>();
     final isPlaying = controller.playingMessageId == message.id;
 
@@ -21,21 +21,16 @@ class MessageBubble extends StatelessWidget {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
-        // 버튼 공간을 위해 최대 폭 조절
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end, // 말풍선 하단 정렬
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // AI 메시지면 왼쪽에 스피커 버튼 추가
             if (!isUser)
               Padding(
                 padding: const EdgeInsets.only(right: 8.0, bottom: 2.0),
                 child: GestureDetector(
-                  onTap: () {
-                    // TTS 토글 (재생/정지)
-                    controller.toggleTts(message.id, message.text);
-                  },
+                  onTap: () => controller.toggleTts(message.id, message.text),
                   child: CircleAvatar(
                     radius: 16,
                     backgroundColor: Colors.grey[200],
@@ -48,7 +43,6 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
 
-            // [기존 말풍선]
             Flexible(
               child: Container(
                 decoration: BoxDecoration(
@@ -65,20 +59,35 @@ class MessageBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (message.imagePath != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(15),
-                            child: Image.file(File(message.imagePath!)),
+                      if (message.imagePaths.isNotEmpty)
+                        SizedBox(
+                          height: 150,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: message.imagePaths.length,
+                            shrinkWrap: true,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.file(File(message.imagePaths[index])),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      Text(
-                        message.text,
-                        style: TextStyle(
-                            color: isUser ? Colors.white : Colors.black87,
-                            fontSize: 16, height: 1.3),
-                      ),
+                      if (message.imagePaths.isNotEmpty)
+                        const SizedBox(height: 8),
+
+                      if (message.text.isNotEmpty)
+                        MarkdownBody(
+                          data: message.text,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(fontSize: 16, color: Colors.black),
+                            strong: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
                     ],
                   ),
                 ),

@@ -7,6 +7,7 @@ import 'chat_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  // 홈 화면의 전체 UI 레이아웃 구성 기능
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,10 +25,8 @@ class HomeScreen extends StatelessWidget {
               const Text("대화할 AI 페르소나를 선택해주세요.",
                   style: TextStyle(fontSize: 16, color: Colors.grey)),
               const SizedBox(height: 50),
-              // 기본 모드 버튼
               _buildCard(context, "기본 모드", "친절한 AI 비서", "🤖", const Color(0xFF34C759), 'normal'),
               const SizedBox(height: 20),
-              // 튜터 모드 버튼
               _buildCard(context, "영어 튜터", "엄격한 문법 선생님", "🎓", const Color(0xFF007AFF), 'tutor'),
             ],
           ),
@@ -36,10 +35,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // 모드 선택 카드 위젯을 생성하는 기능
   Widget _buildCard(BuildContext context, String title, String sub, String icon, Color color, String mode) {
     return GestureDetector(
       onTap: () {
-        // 모드 설정 -> Controller가 내부에서 채팅방 데이터를 교체함
         context.read<ChatController>().setMode(mode);
         Navigator.push(context, CupertinoPageRoute(builder: (_) => const ChatScreen()));
       },

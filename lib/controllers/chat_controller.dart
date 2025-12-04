@@ -16,6 +16,9 @@ class ChatController extends ChangeNotifier {
   String _currentMode = 'normal';
   String? _playingMessageId;
 
+  List<XFile> _selectedImages = [];
+  List<XFile> get selectedImages => _selectedImages;
+
   List<ChatMessage> get messages => _messages;
   bool get isLoading => _isLoading;
   bool get isListening => _isListening;
@@ -27,18 +30,18 @@ class ChatController extends ChangeNotifier {
   final FlutterTts _flutterTts = FlutterTts();
   final Uuid _uuid = const Uuid();
 
+  // 컨트롤러 초기화 및 주요 서비스 시작 기능
   ChatController() {
     _initGemini();
     _initTTS();
     _loadMessages();
-    _initSTT(); // STT 초기화 추가
+    _initSTT();
   }
 
-  // STT 상태 리스너 초기화 (아이콘 자동 변경을 위해 필수)
+  // 음성 인식(STT) 엔진 초기화 및 상태 리스너 설정 기능
   void _initSTT() async {
     await _speech.initialize(
       onStatus: (status) {
-        // 인식이 끝나거나 취소되면 듣기 상태 해제
         if (status == 'done' || status == 'notListening') {
           _isListening = false;
           notifyListeners();
@@ -47,20 +50,18 @@ class ChatController extends ChangeNotifier {
       onError: (error) {
         _isListening = false;
         notifyListeners();
-        print('STT Error: $error');
       },
     );
   }
 
+  // Gemini API 모델 초기화 및 프롬프트 설정 기능
   void _initGemini() {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) return;
-
     String systemPrompt = "당신은 도움이 되는 AI 비서입니다. 한국어로 대답하세요.";
     if (_currentMode == 'tutor') {
       systemPrompt = "You are a strict English tutor. Only speak English and correct the user's grammar.";
     }
-
     _model = GenerativeModel(
       model: 'gemini-2.5-flash',
       apiKey: apiKey,
@@ -68,6 +69,7 @@ class ChatController extends ChangeNotifier {
     );
   }
 
+  // 대화 모드를 변경하고 관련 설정을 재초기화하는 기능
   void setMode(String mode) {
     if (_currentMode != mode) {
       stopTTS();
@@ -78,17 +80,18 @@ class ChatController extends ChangeNotifier {
     }
   }
 
+  // 음성 합성(TTS) 엔진 초기화 및 언어 설정 기능
   void _initTTS() async {
     await _flutterTts.setLanguage("ko-KR");
     await _flutterTts.setPitch(1.0);
-    await _flutterTts.setSpeechRate(0.5); // 속도 조절됨
-
+    await _flutterTts.setSpeechRate(0.5);
     _flutterTts.setCompletionHandler(() {
       _playingMessageId = null;
       notifyListeners();
     });
   }
 
+  // 특정 메시지의 TTS 재생 또는 중지를 토글하는 기능
   Future<void> toggleTts(String messageId, String text) async {
     if (_playingMessageId == messageId) {
       await _flutterTts.stop();
@@ -96,75 +99,89 @@ class ChatController extends ChangeNotifier {
     } else {
       await _flutterTts.stop();
       _playingMessageId = messageId;
-      if (_currentMode == 'tutor') {
-        await _flutterTts.setLanguage("en-US");
-      } else {
-        await _flutterTts.setLanguage("ko-KR");
-      }
+      if (_currentMode == 'tutor') await _flutterTts.setLanguage("en-US");
+      else await _flutterTts.setLanguage("ko-KR");
       await _flutterTts.speak(text);
     }
     notifyListeners();
   }
 
+  // 현재 재생 중인 TTS를 즉시 중지하는 기능
   Future<void> stopTTS() async {
     await _flutterTts.stop();
     _playingMessageId = null;
     notifyListeners();
   }
 
-  // STT 시작 함수 (결과를 돌려줄 콜백 함수를 받음)
+  // 마이크를 통해 음성을 텍스트로 변환하기 시작하는 기능
   Future<void> startListening(Function(String) onTextUpdate) async {
     bool available = await _speech.initialize();
     if (available) {
       _isListening = true;
       notifyListeners();
-
-      // 언어 설정: 튜터 모드면 영어 인식, 아니면 한국어 인식
       String localeId = _currentMode == 'tutor' ? 'en_US' : 'ko_KR';
-
       _speech.listen(
-        onResult: (result) {
-          // 인식된 단어를 View로 전달
-          onTextUpdate(result.recognizedWords);
-        },
+        onResult: (result) => onTextUpdate(result.recognizedWords),
         localeId: localeId,
-        listenFor: const Duration(seconds: 30), // 최대 30초 듣기
-        pauseFor: const Duration(seconds: 3),   // 3초 침묵 시 종료
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
         cancelOnError: true,
         listenMode: ListenMode.dictation,
       );
     }
   }
 
+  // 음성 인식을 중지하는 기능
   Future<void> stopListening() async {
     _isListening = false;
     await _speech.stop();
     notifyListeners();
   }
 
-  Future<void> sendMessage(String text, {XFile? imageFile}) async {
-    if ((text.trim().isEmpty && imageFile == null) || _isLoading) return;
+  // 갤러리나 카메라에서 가져온 이미지를 전송 목록에 추가하는 기능
+  void pickImages(List<XFile> images) {
+    _selectedImages.addAll(images);
+    notifyListeners();
+  }
+
+  // 전송 목록에서 특정 이미지를 제거하는 기능
+  void removeImage(int index) {
+    _selectedImages.removeAt(index);
+    notifyListeners();
+  }
+
+  // 텍스트와 이미지를 포함하여 메시지를 전송하고 AI 응답을 받는 기능
+  Future<void> sendMessage(String text) async {
+    if ((text.trim().isEmpty && _selectedImages.isEmpty) || _isLoading) return;
 
     try {
       _isLoading = true;
+
       final userMsg = ChatMessage(
         id: _uuid.v4(),
         text: text,
         isUser: true,
-        imagePath: imageFile?.path,
+        imagePaths: _selectedImages.map((e) => e.path).toList(),
         time: DateTime.now(),
       );
       _messages.add(userMsg);
+
+      final imagesToSend = List<XFile>.from(_selectedImages);
+      _selectedImages.clear();
+
       notifyListeners();
       _saveMessages();
 
-      Content content;
-      if (imageFile != null) {
-        final bytes = await imageFile.readAsBytes();
-        content = Content.multi([TextPart(text), DataPart('image/jpeg', bytes)]);
-      } else {
-        content = Content.text(text);
+      final List<Part> parts = [];
+
+      if (text.isNotEmpty) parts.add(TextPart(text));
+
+      for (var img in imagesToSend) {
+        final bytes = await img.readAsBytes();
+        parts.add(DataPart('image/jpeg', bytes));
       }
+
+      final content = Content.multi(parts);
 
       final aiMsgId = _uuid.v4();
       _messages.add(ChatMessage(id: aiMsgId, text: "", isUser: false, time: DateTime.now()));
@@ -182,6 +199,7 @@ class ChatController extends ChangeNotifier {
         }
       }
       _saveMessages();
+
     } catch (e) {
       _messages.add(ChatMessage(
           id: _uuid.v4(), text: "오류: $e", isUser: false, time: DateTime.now()));
@@ -191,20 +209,24 @@ class ChatController extends ChangeNotifier {
     }
   }
 
+  // 현재 대화 내용과 선택된 이미지를 모두 초기화하는 기능
   void clearChat() async {
     stopTTS();
     _messages.clear();
+    _selectedImages.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('chat_history_$_currentMode');
     notifyListeners();
   }
 
+  // 대화 내용을 로컬 저장소에 저장하는 기능
   Future<void> _saveMessages() async {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(_messages.map((m) => m.toJson()).toList());
     await prefs.setString('chat_history_$_currentMode', encoded);
   }
 
+  // 로컬 저장소에서 대화 내용을 불러오는 기능
   Future<void> _loadMessages() async {
     final prefs = await SharedPreferences.getInstance();
     final String? stored = prefs.getString('chat_history_$_currentMode');
