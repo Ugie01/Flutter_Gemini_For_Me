@@ -28,23 +28,33 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  String _beforeListeningText = "";
   // 음성 인식을 시작하거나 중지하는 기능
   void _listen() {
     final controller = context.read<ChatController>();
+
     if (!controller.isListening) {
+      // 1. 듣기 시작하기 전, 입력창에 있던 글자를 따로 저장
+      _beforeListeningText = _textController.text;
+
       controller.startListening((recognizedText) {
         setState(() {
-          if (_textController.text.isNotEmpty) {
-            _textController.text += " $recognizedText";
-          } else {
+          // 2. [기존 글자] + [공백] + [새로 인식된 글자] 형태로 매번 덮어씌움
+          if (_beforeListeningText.isEmpty) {
             _textController.text = recognizedText;
+          } else {
+            _textController.text = "$_beforeListeningText $recognizedText";
           }
+
+          // 커서 위치를 맨 뒤로 이동
           _textController.selection = TextSelection.fromPosition(
               TextPosition(offset: _textController.text.length));
         });
       });
     } else {
       controller.stopListening();
+      // 듣기가 끝나면 임시 저장 변수 초기화
+      _beforeListeningText = "";
     }
   }
 
