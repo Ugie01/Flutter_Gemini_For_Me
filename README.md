@@ -41,11 +41,11 @@ Google's **Gemini 2.5 Flash** 모델을 활용한 Flutter 기반의 AI 채팅 �
 git clone [https://github.com/your-username/my-gemini-flutter.git](https://github.com/your-username/my-gemini-flutter.git)
 cd my-gemini-flutter
 ```
-###2. 패키지 설치
+### 2. 패키지 설치
 ```bash
 flutter pub get
 ```
-###3. 환경 변수 설정 (.env)
+### 3. 환경 변수 설정 (.env)
 프로젝트 루트 디렉토리에 .env 파일을 생성하고, 발급받은 Gemini API Key를 입력하세요.
 
 Note: API Key는 Google AI Studio에서 무료로 발급받을 수 있습니다.
@@ -54,11 +54,11 @@ Note: API Key는 Google AI Studio에서 무료로 발급받을 수 있습니다.
 # .env file
 GEMINI_API_KEY=your_api_key_here
 ```
-###4. 앱 실행
+### 4. 앱 실행
 ```bash
 flutter run
 ```
-##📂 폴더 구조 (Project Structure)
+## 📂 폴더 구조 (Project Structure)
 ```
 lib/
 ├── controllers/
@@ -72,7 +72,7 @@ lib/
 │       └── message_bubble.dart # 말풍선 위젯 (마크다운 & 이미지 표시)
 └── main.dart                   # 앱 진입점 및 테마 설정
 ```
-##⚠️ 주의 사항
+## ⚠️ 주의 사항
 이 프로젝트는 Gemini API를 사용하므로 인터넷 연결이 필수적입니다.
 
 Android/iOS 시뮬레이터 또는 실제 기기에서 마이크 및 카메라 권한 허용이 필요합니다.
