@@ -37,7 +37,7 @@ Google's **Gemini 2.5 Flash** 모델을 활용한 Flutter 기반의 AI 채팅 �
 
 ### 1. 프로젝트 클론
 ```bash
-git clone [https://github.com/your-username/my-gemini-flutter.git](https://github.com/your-username/my-gemini-flutter.git)
+git clone [https://github.com/Ugie01/Flutter_Gemini_For_Me.git](https://github.com/Ugie01/Flutter_Gemini_For_Me.git)
 cd my-gemini-flutter
 ```
 ### 2. 패키지 설치
